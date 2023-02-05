@@ -1,0 +1,32 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <script> 
+    function handleButtonClick(){
+        
+        let varItem = document.getElementById("item").value
+        console.log(varItem)
+
+        var div = document.getElementById('list');
+
+        div.innerHTML += varItem+"<br/>";
+
+    }
+    </script>
+</head>
+<body>
+
+    <input id="item" type="text" size="50"/> <input id="add" type="button" value="Add" onclick="handleButtonClick()"/>
+
+    <div id="list">
+
+
+
+    </div>
+    
+</body>
+</html>
