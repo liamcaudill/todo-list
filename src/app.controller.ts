@@ -1,4 +1,4 @@
-import { Controller, Get } from '@nestjs/common';
+import { Controller, Get, Post, Req } from '@nestjs/common';
 import { AppService } from './app.service';
 
 @Controller()
@@ -13,5 +13,11 @@ export class AppController {
   @Get("/liam")
   getLiam() {
     return {time: new Date()}
+  }
+
+  @Post("/api/todo")
+  createTodo(@Req() req) {
+    const body = req.body;
+    return this.appService.createTodo(body)
   }
 }
