@@ -1,0 +1,83 @@
+body {
+    display: flex;
+    flex-flow: column;
+    margin: 0;
+    background-color: #222222;
+}
+
+.navbar {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    padding: 0 20px 0 20px;
+    margin:0;
+    height: 60px;
+    background-color: #333333;
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
+
+.navbar a{
+    font-size: x-large;
+    color: #e5e7eb;
+    text-decoration: none;
+}
+
+.navbar a:hover {
+    color:#c4c6ca;
+}
+
+.add-list {
+    padding: 25px;
+    font-family: Convergence, Verdana, Geneva, Tahoma, sans-serif;
+    color: #e5e7eb;
+    background-color: #444;
+}
+
+.add-list input, button{
+    border:none;
+    border-radius: 0;
+    font-size: 20px;
+    font-family: Convergence, Verdana, Geneva, Tahoma, sans-serif;
+    height: 40px;
+}
+
+.add-list input{
+    margin-left: 17.5%;
+    width: 50%;
+}
+
+.add-list button{
+    padding: 0;
+    background-color: #337AB7;
+    color: #e5e7eb;
+    width: 15%;
+}
+
+.add-list button:hover{
+    background-color: #2e689a;
+    cursor:pointer;
+}
+
+.todo-list {
+    font-family: Verdana, Geneva, Tahoma, sans-serif;
+    font-size: 16px;
+    font-weight: 500;
+    color:#e5e7eb;
+}
+
+.todo-list ul{
+    margin: 0;
+    padding: 0;
+}
+.todo-list ul li{
+    list-style-type: none;
+    padding: 6px;
+    position: relative;
+}
+.todo-list ul li:nth-child(odd){
+    background: #232323;
+}
+
+.todo-list ul li:nth-child(even){
+    background: #383838;
+}

@@ -4,28 +4,33 @@
     <meta charset="UTF-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Document</title>
-    <script> 
-    function handleButtonClick(){
-        
-        let varItem = document.getElementById("item").value
-        console.log(varItem)
-
-        var div = document.getElementById('list');
-
-        div.innerHTML += varItem+"<br/>";
-
+    <title>To-Do List</title>
+    <link rel="icon" type="image/x-icon" href="/img/favicon.png">
+    <link rel="stylesheet" href="/css/style.css">
+    <script>
+    function addListElement() {
+        var ul = document.getElementById("list");
+        var li = document.createElement("li");
+        li.appendChild(document.createTextNode(document.getElementById("addItem").value));
+        ul.appendChild(li);
     }
     </script>
 </head>
 <body>
 
-    <input id="item" type="text" size="50"/> <input id="add" type="button" value="Add" onclick="handleButtonClick()"/>
+    <div class="navbar">
+        <a href="index.html">Home</a>
+        <a href="#Placeholder1">Placeholder</a>
+        <a href="#Placeholder2">Placeholder</a>
+    </div>
+    <div class="add-list">
+        <input id="addItem" type="text"/> <button type="button"onclick="addListElement()">Add Item</button>
+        
+    </div>
 
-    <div id="list">
-
-
-
+    <div class="todo-list">
+        <ul id="list">
+        </ul>
     </div>
     
 </body>
