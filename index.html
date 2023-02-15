@@ -7,25 +7,18 @@
     <title>To-Do List</title>
     <link rel="icon" type="image/x-icon" href="/img/favicon.png">
     <link rel="stylesheet" href="/css/style.css">
-    <script>
-    function addListElement() {
-        var ul = document.getElementById("list");
-        var li = document.createElement("li");
-        li.appendChild(document.createTextNode(document.getElementById("addItem").value));
-        ul.appendChild(li);
-    }
-    </script>
+    <script src="scripts/list.js"></script>
 </head>
 <body>
 
     <div class="navbar">
         <a href="index.html">Home</a>
-        <a href="#Placeholder1">Placeholder</a>
-        <a href="#Placeholder2">Placeholder</a>
+        <!--<a href="#Placeholder1">Placeholder</a>
+        <a href="#Placeholder2">Placeholder</a>-->
     </div>
     <div class="add-list">
         <input id="addItem" type="text"/> <button type="button"onclick="addListElement()">Add Item</button>
-        
+        <button type="button"onclick="removeChecked()">Remove Checked</button>
     </div>
 
     <div class="todo-list">

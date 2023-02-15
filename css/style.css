@@ -81,3 +81,8 @@ body {
 .todo-list ul li:nth-child(even){
     background: #383838;
 }
+
+input[type=checkbox]:checked + label{
+    text-decoration: line-through;
+    color:#e5e7eb9c
+}
