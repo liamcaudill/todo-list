@@ -16,7 +16,7 @@ export class AppService {
     var item:TodoDTO = {
     id: this.itemNum,
     title: createBody.title,
-    status: 'todo'
+    status: createBody.status
     }
     this.items = [...this.items, item]
     this.itemNum++

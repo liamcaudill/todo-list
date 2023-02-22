@@ -17,7 +17,7 @@ export class AppController {
   }
   */
 
-  @Get()
+  @Get("/api/todo")
   getTodos(): TodoDTO[] {
     return this.appService.items
   }
