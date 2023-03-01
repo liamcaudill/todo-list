@@ -12,27 +12,63 @@ async function renderList() {
     //console.log(list)
 
     for (item of list) {
+        if (!item) {
+            continue;
+        }
         //console.log(item)
         var li = document.createElement("li")
-        var listCheckbox = document.createElement("input")
         var label = document.createElement("label")
+
+        var listCheckbox = document.createElement("input")
         listCheckbox.type = "checkbox"
-        listCheckbox.setAttribute("onclick","toggleStatus(this)")
+        listCheckbox.setAttribute("onclick", "toggleStatus(this)")
+        //listCheckbox.setAttribute("data",`item=${item.title}`)
         label.appendChild(document.createTextNode(item.title))
         listCheckbox.id = `item-${item.id}`
-        if(item.status == 'done'){
+        if (item.status == 'done') {
             listCheckbox.checked = true;
-        }else{
+        } else {
             listCheckbox.checked = false;
         }
         li.appendChild(listCheckbox)
         li.appendChild(label)
         todoList.appendChild(li)
     }
+    //console.log(list)
+    //console.log(todoList)
 }
 
-async function toggleStatus(id){
-    console.log(id)
+async function toggleStatus(checkbox) {
+    const itemId = checkbox.id.split("-")[1]
+    //console.log(itemId)
+    //console.log(checkbox)
+    //console.log(`checked status = ${checkbox.checked}`)
+
+
+    if (checkbox.checked) {
+        await fetch(`http://129.213.47.146:3000/api/todo/${itemId}`, {
+            method: 'PUT',
+            headers: {
+                'Accept': '*/*',
+                'Connection': 'keep-alive',
+                'Content-Type': 'application/json'
+            },
+            body: `{"status": "done"}`,
+        })
+    } else {
+        await fetch(`http://129.213.47.146:3000/api/todo/${itemId}`, {
+            method: 'PUT',
+            headers: {
+                'Accept': '*/*',
+                'Connection': 'keep-alive',
+                'Content-Type': 'application/json'
+            },
+            body: `{"status": "todo"}`,
+        })
+    }
+    /*
+    
+    */
 }
 
 async function addListElement() {
@@ -40,7 +76,7 @@ async function addListElement() {
         var inputBox = document.getElementById("addItem")
         var todoList = document.getElementById("list")
 
-        const response = await fetch("http://129.213.47.146:3000/api/todo", {
+        await fetch("http://129.213.47.146:3000/api/todo", {
             method: 'POST',
             headers: {
                 'Accept': '*/*',
@@ -48,13 +84,13 @@ async function addListElement() {
                 'Content-Type': 'application/json'
             },
             body: `{"title": "${inputBox.value}", "status": "todo"}`,
-        });
-        response.json().then(data => {
+        })
+        /*response.json().then(data => {
             //console.log(JSON.stringify(data));
-        });
+        })*/
 
-        if(todoList){
-            while(todoList.firstChild){
+        if (todoList) {
+            while (todoList.firstChild) {
                 todoList.removeChild(todoList.firstChild)
             }
         }
@@ -66,13 +102,37 @@ async function addListElement() {
 }
 
 async function removeChecked() {
-    var todoList = document.getElementById('list')
-    var items = Array.from(todoList.childNodes)
-    var item
 
-    while (item = items.pop()) {
-        if (item.firstChild && item.firstChild.checked) {
-            todoList.removeChild(item);
+    var fetchedList
+
+    await fetch("http://129.213.47.146:3000/api/todo").then(function (response) {
+        return response.json();
+    }).then(function (data) {
+        fetchedList = data
+    }).catch(function (err) {
+        console.log('Fetch Error :-S', err);
+    });
+
+    console.log(fetchedList)
+
+    for (const item of fetchedList) {
+        if (item && item.status == 'done') {
+            await fetch(`http://129.213.47.146:3000/api/todo/${item.id}`, {
+                method: 'DELETE',
+                headers: {
+                    'Accept': '*/*',
+                    'Connection': 'keep-alive',
+                    'Content-Type': 'application/json'
+                }
+            })
         }
     }
+    var todoList = document.getElementById("list")
+    if (todoList) {
+        while (todoList.firstChild) {
+            todoList.removeChild(todoList.firstChild)
+        }
+    }
+
+    renderList()
 }
