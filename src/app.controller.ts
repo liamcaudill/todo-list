@@ -15,20 +15,20 @@ export class AppController {
   getLiam() {
     return {time: new Date()}
   }
-  */
+ */
 
   @Get("/api/todo")
   getTodos(): TodoDTO[] {
     return this.appService.items
   }
-
+  
   @Post("/api/todo")
   createTodo(@Req() req) {
     const body = req.body;
     return this.appService.createTodo(body)
   }
-
-  @Put("/api/todo/:id")
+  
+@Put("/api/todo/:id")
   updateTodo(@Req() req, @Param() params) {
 
     const idNum = parseInt(params.id)

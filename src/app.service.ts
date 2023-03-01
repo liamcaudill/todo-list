@@ -3,14 +3,16 @@ import { TodoDTO } from './todo/todo.dto';
 
 @Injectable()
 export class AppService {
-  public itemNum: number = 0
-  public items: TodoDTO[] = []
+
+public itemNum: number = 0
+public items: TodoDTO[] = []
 
   getHello(): string {
     return 'Hello World!';
   }
 
   createTodo(createBody) {
+
     var item: TodoDTO = {
       id: this.itemNum,
       title: createBody.title,
@@ -50,5 +52,6 @@ export class AppService {
     this.items[id] = null
     console.log(this.items)
     return this.items
+
   }
 }
