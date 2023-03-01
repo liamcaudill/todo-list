@@ -10,6 +10,6 @@ services:
     env_file:
       - .env
       # Run a command against the development stage of the image
-    command: npm run start:dev
+    command: nest start --watch
     ports:
       - 3000:3000
