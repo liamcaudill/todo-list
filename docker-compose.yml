@@ -10,6 +10,8 @@ services:
     env_file:
       - .env
       # Run a command against the development stage of the image
+    environment: 
+      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
     ports:
       - 3000:3000
     depends_on:

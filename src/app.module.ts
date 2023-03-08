@@ -16,6 +16,7 @@ import { ConfigModule } from '@nestjs/config';
     ConfigModule.forRoot(),
     CacheModule.register({
       isGlobal: true,
+      // @ts-ignore
       store: redisStore,
       host: process.env.REDIS_HOST,
       port: process.env.REDIS_PORT,

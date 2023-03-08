@@ -7,9 +7,6 @@ export class AppService {
 public itemNum: number = 0
 public items: TodoDTO[] = []
 
-  getHello(): string {
-    return 'Hello World!';
-  }
 
   createTodo(createBody) {
 
