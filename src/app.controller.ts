@@ -6,10 +6,16 @@ import { TodoDTO } from './todo/todo.dto';
 export class AppController {
   constructor(private readonly appService: AppService) { }
 
-  @Get("/api/todo")
-  getTodos(): TodoDTO[] {
-    return this.appService.items
+  @Get("/api/todo/")
+  getTodos() {
+    return this.appService.getTodo()
   }
+
+  /*
+  @Get("/api/todo/:id?")
+  getTodos(@Param() params) {
+    return this.appService.getTodo(parseInt(params.id))
+  }*/
   
   @Post("/api/todo")
   createTodo(@Req() req) {
