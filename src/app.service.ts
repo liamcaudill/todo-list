@@ -14,14 +14,14 @@ export class AppService {
   async getTodo(){
 
       const todoList = await this.prisma.todo.findMany()
-      console.log(todoList)
+      //console.log(todoList)
       return todoList
   }
 
-  async getTodoAt(id: number){
+  async getTodoByID(id: string){
     const todoItem = await this.prisma.todo.findUnique({
       where:{
-        id: id
+        id: parseInt(id)
       }
     })
 
@@ -37,19 +37,6 @@ export class AppService {
     })
 
     return data
-    /*
-    var item: TodoDTO = {
-      id: this.itemNum,
-      title: createBody.title,
-      status: createBody.status
-    }
-
-    this.items[this.itemNum] = item
-    //this used to be before, see if anything breaks
-    this.itemNum++
-    console.log(this.items)
-    return item
-    */
   }
 
   

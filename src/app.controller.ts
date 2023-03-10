@@ -11,11 +11,11 @@ export class AppController {
     return this.appService.getTodo()
   }
 
-  /*
-  @Get("/api/todo/:id?")
-  getTodos(@Param() params) {
-    return this.appService.getTodo(parseInt(params.id))
-  }*/
+  
+  @Get("/api/todo/:id")
+  getTodosByID(@Param() params) {
+    return this.appService.getTodoByID(params.id)
+  }
   
   @Post("/api/todo")
   createTodo(@Req() req) {
