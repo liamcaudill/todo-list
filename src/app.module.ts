@@ -3,7 +3,7 @@ import { AppController } from './app.controller';
 import { AppService } from './app.service';
 import { ServeStaticModule } from '@nestjs/serve-static';
 import { join } from 'path';
-import { CacheModule} from '@nestjs/common';
+import { CacheModule } from '@nestjs/common';
 import * as redisStore from 'cache-manager-redis-store';
 import { ConfigModule } from '@nestjs/config';
 import { PrismaService } from './prisma.service';
@@ -27,4 +27,4 @@ import { PrismaService } from './prisma.service';
   controllers: [AppController],
   providers: [AppService, PrismaService]
 })
-export class AppModule {}
+export class AppModule { }
