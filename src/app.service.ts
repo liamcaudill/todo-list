@@ -1,30 +1,44 @@
 import { Injectable } from '@nestjs/common';
 import { TodoDTO } from './todo/todo.dto';
+import { PrismaService } from './prisma.service';
 
 @Injectable()
 export class AppService {
+  constructor(private prisma: PrismaService) { }
 
-public itemNum: number = 0
-public items: TodoDTO[] = []
+  public itemNum: number = 0
+  public items: TodoDTO[] = []
 
-  getHello(): string {
-    return 'Hello World!';
+
+  async getTodo() {
+
+    const todoList = await this.prisma.todo.findMany()
+    //console.log(todoList)
+    return todoList
+  }
+
+  async getTodoByID(id: string) {
+    const todoItem = await this.prisma.todo.findUnique({
+      where: {
+        id: parseInt(id)
+      }
+    })
+
+    return todoItem
   }
 
   createTodo(createBody) {
 
-    var item: TodoDTO = {
-      id: this.itemNum,
-      title: createBody.title,
-      status: createBody.status
-    }
+    const data = this.prisma.todo.create({
+      data: {
+        title: createBody.title
+      }
+    })
 
-    this.items[this.itemNum] = item
-    //this used to be before, see if anything breaks
-    this.itemNum++
-    console.log(this.items)
-    return item
+    return data
   }
+
+
 
   updateTodo(id: number, createBody) {
     let tempItem: TodoDTO
@@ -47,11 +61,20 @@ public items: TodoDTO[] = []
     return this.items
   }
 
-  deleteTodo(id: number) {
+  async deleteTodo(id: number) {
+
+    const deletedTodo = await this.prisma.todo.delete({
+      where: {
+        id: id
+      },
+    })
+
+    return deletedTodo
     //console.log(id)
+    /*
     this.items[id] = null
     console.log(this.items)
-    return this.items
+    return this.items*/
 
   }
 }
