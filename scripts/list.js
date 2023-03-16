@@ -113,10 +113,11 @@ async function removeChecked() {
         console.log('Fetch Error :-S', err);
     });
 
-    console.log(fetchedList)
+    //console.log(fetchedList)
 
     for (const item of fetchedList) {
         if (item && item.status == 'done') {
+            console.log(item)
             await fetch(`http://localhost:3000/api/todo/${item.id}`, {
                 method: 'DELETE',
                 headers: {

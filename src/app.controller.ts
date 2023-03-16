@@ -25,7 +25,6 @@ export class AppController {
   
 @Put("/api/todo/:id")
   updateTodo(@Req() req, @Param() params) {
-
     const idNum = parseInt(params.id)
     const body = req.body
     return this.appService.updateTodo(idNum, body)

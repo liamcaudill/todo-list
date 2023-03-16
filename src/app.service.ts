@@ -6,13 +6,15 @@ import { PrismaService } from './prisma.service';
 export class AppService {
   constructor(private prisma: PrismaService) { }
 
-  public itemNum: number = 0
-  public items: TodoDTO[] = []
-
-
   async getTodo() {
 
-    const todoList = await this.prisma.todo.findMany()
+    const todoList = await this.prisma.todo.findMany({
+      orderBy: [
+        {
+          id: 'asc',
+        },
+      ]
+    })
     //console.log(todoList)
     return todoList
   }
@@ -40,28 +42,25 @@ export class AppService {
 
 
 
-  updateTodo(id: number, createBody) {
-    let tempItem: TodoDTO
-    //console.log(createBody)
-    this.items.map(todo => {
-      if (todo) {
-        if (todo.id === id) {
-          if ("title" in createBody) {
-            tempItem = { id, title: createBody.title, status: createBody.status }
-          } else if (!("title" in createBody)) {
-            const tempTitle = todo.title
-            tempItem = { id, title: tempTitle, status: createBody.status }
-          }
-          //this used to have +1 in the [id]
-          this.items[id] = tempItem
-        }
-      }
+  async updateTodo(id: number, createBody) {
+
+    //console.log(createBody.status)
+
+    const updatedTodo = await this.prisma.todo.update({
+      where: {
+        id: id
+      },
+      data: {
+        status: createBody.status
+      },
     })
-    console.log(this.items)
-    return this.items
+
+    return updatedTodo
   }
 
   async deleteTodo(id: number) {
+
+    //console.log(id)
 
     const deletedTodo = await this.prisma.todo.delete({
       where: {
@@ -69,12 +68,8 @@ export class AppService {
       },
     })
 
-    return deletedTodo
-    //console.log(id)
-    /*
-    this.items[id] = null
-    console.log(this.items)
-    return this.items*/
+    //console.log(deletedTodo)
 
+    return deletedTodo
   }
 }
