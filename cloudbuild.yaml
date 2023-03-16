@@ -17,6 +17,7 @@ steps:
 
     # Install Node.js dependencies
   - name: "node"
+    id: npm-install
     entrypoint: "npm"
     args: ["install"]
 
