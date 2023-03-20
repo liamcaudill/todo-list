@@ -5,21 +5,16 @@ import { TodoDTO } from './todo/todo.dto';
 @Controller()
 export class AppController {
   constructor(private readonly appService: AppService) { }
-  /*
-  @Get()
-  getHello(): string {
-    return this.appService.getHello();
+
+  @Get("/api/todo/")
+  getTodos() {
+    return this.appService.getTodo()
   }
 
-  @Get("/liam")
-  getLiam() {
-    return {time: new Date()}
-  }
- */
-
-  @Get("/api/todo")
-  getTodos(): TodoDTO[] {
-    return this.appService.items
+  
+  @Get("/api/todo/:id")
+  getTodosByID(@Param() params) {
+    return this.appService.getTodoByID(params.id)
   }
   
   @Post("/api/todo")
@@ -30,7 +25,6 @@ export class AppController {
   
 @Put("/api/todo/:id")
   updateTodo(@Req() req, @Param() params) {
-
     const idNum = parseInt(params.id)
     const body = req.body
     return this.appService.updateTodo(idNum, body)

@@ -1,6 +1,6 @@
 async function renderList() {
     var list
-    await fetch("http://129.213.47.146:3000/api/todo").then(function (response) {
+    await fetch("http://localhost:3000/api/todo").then(function (response) {
         return response.json();
     }).then(function (data) {
         list = data
@@ -46,7 +46,7 @@ async function toggleStatus(checkbox) {
 
 
     if (checkbox.checked) {
-        await fetch(`http://129.213.47.146:3000/api/todo/${itemId}`, {
+        await fetch(`http://localhost:3000/api/todo/${itemId}`, {
             method: 'PUT',
             headers: {
                 'Accept': '*/*',
@@ -56,7 +56,7 @@ async function toggleStatus(checkbox) {
             body: `{"status": "done"}`,
         })
     } else {
-        await fetch(`http://129.213.47.146:3000/api/todo/${itemId}`, {
+        await fetch(`http://localhost:3000/api/todo/${itemId}`, {
             method: 'PUT',
             headers: {
                 'Accept': '*/*',
@@ -76,7 +76,7 @@ async function addListElement() {
         var inputBox = document.getElementById("addItem")
         var todoList = document.getElementById("list")
 
-        await fetch("http://129.213.47.146:3000/api/todo", {
+        await fetch("http://localhost:3000/api/todo", {
             method: 'POST',
             headers: {
                 'Accept': '*/*',
@@ -105,7 +105,7 @@ async function removeChecked() {
 
     var fetchedList
 
-    await fetch("http://129.213.47.146:3000/api/todo").then(function (response) {
+    await fetch("http://localhost:3000/api/todo").then(function (response) {
         return response.json();
     }).then(function (data) {
         fetchedList = data
@@ -113,11 +113,12 @@ async function removeChecked() {
         console.log('Fetch Error :-S', err);
     });
 
-    console.log(fetchedList)
+    //console.log(fetchedList)
 
     for (const item of fetchedList) {
         if (item && item.status == 'done') {
-            await fetch(`http://129.213.47.146:3000/api/todo/${item.id}`, {
+            console.log(item)
+            await fetch(`http://localhost:3000/api/todo/${item.id}`, {
                 method: 'DELETE',
                 headers: {
                     'Accept': '*/*',
