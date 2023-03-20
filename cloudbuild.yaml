@@ -43,7 +43,7 @@ steps:
     entrypoint: sh
     args:
       - "-c"
-      - "(./cloud_sql_proxy -dir=/cloudsql -instances=$_INSTANCE_CONNECTION_NAME --port 5432 & sleep 2)"
+      - "(./cloud_sql_proxy -dir=/cloudsql -instances=$_INSTANCE_CONNECTION_NAME --port 5432 & sleep 2) && npm run migrate-prod"
     timeout: "1200s"
     waitFor: ["npm-install", "proxy-install"]
 
