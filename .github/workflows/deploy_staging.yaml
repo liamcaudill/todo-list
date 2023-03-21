@@ -103,7 +103,7 @@ jobs:
             --memory=1024M \
             --port=3000 \
             --region=us-central1 \
-            --max-instances=5 \
+            --max-instances=20 \
             --execution-environment=gen2 \
             --add-cloudsql-instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }} \
             --set-env-vars=NODE_ENV=${{ env.APP_ENV }},DATABASE_URL="postgresql://${{ steps.secrets.outputs.postgres_user }}:${{ steps.secrets.outputs.postgres_password }}@localhost:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}?schema=public&host=/cloudsql/${{ env.CLOUD_SQL_INSTANCE_CONNECTION }}"
