@@ -15,6 +15,9 @@ jobs:
     environment: staging
     name: Build
     runs-on: ubuntu-latest
+    env:
+      GCP_PROJECT_ID: samir1024
+      CLOUD_SQL_INSTANCE_CONNECTION: samir1024:us-central1:pg
     permissions:
       id-token: write # This is required for requesting the JWT
       contents: read # This is required for actions/checkout
@@ -55,14 +58,55 @@ jobs:
       - name: Output image tags
         run: echo "IMAGE_TAG=${{ steps.dockerImage.outputs.tag }}"
 
-      - name: 'Set up Cloud SDK'
-        uses: 'google-github-actions/setup-gcloud@v1'
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
 
       # Now you can run gcloud commands authenticated as the impersonated service account.
-      - id: 'gcloud'
-        name: 'gcloud'
+      - id: "gcloud"
+        name: "gcloud"
         run: |-
           gcloud secrets versions access "latest" --secret "foo"
+
+      - name: Get Secrets from GCP Secret Manager
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v1"
+        with:
+          secrets: |-
+            postgres_user:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-user
+            postgres_password:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-password
+            postgres_host:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-host
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install packages
+        run: npm ci
+
+      - name: Run tests
+        run: npm test
+
+      - name: Get Cloud SQL Proxy
+        run: |
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+
+      - name: Run Database migrations
+        env:
+          POSTGRES_DB: liam-todo
+          POSTGRES_PORT: 5432
+          POSTGRES_HOST: ${{ steps.secrets.outputs.postgres_host }}
+          POSTGRES_USER: ${{ steps.secrets.outputs.postgres_user }}
+          POSTGRES_PASSWORD: ${{ steps.secrets.outputs.postgres_password }}
+        run: |
+          ./cloud_sql_proxy -instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }}:${{ env.POSTGRES_DB }}=tcp:${{ env.POSTGRES_PORT }} &
+          npm run migrate-prod
+
+      # - name: Backup staging database
+      #   run: |
+      #     gcloud sql backups create --instance=pg
+
+      # - run: npm run migrate:prod
 
       # - name: Build and push Docker image
       #   uses: docker/build-push-action@v3
@@ -75,6 +119,31 @@ jobs:
       #     build-args: |
       #       DD_ENV=${{ env.APP_ENV }}
       #       DD_SERVICE=${{ env.APP_NAME }}
+
+      # - name: "node"
+      #   id: npm-install
+      #   entrypoint: "npm"
+      #   args: ["install"]
+
+      #   # Install Cloud SQL proxy
+      # - id: proxy-install
+      #   name: gcr.io/cloud-builders/npm
+      #   entrypoint: sh
+      #   args:
+      #     - "-c"
+      #     - "wget https://storage.googleapis.com/cloudsql-proxy/v1.20.1/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy && chmod +x cloud_sql_proxy"
+      #   waitFor: ["-"]
+
+      # # Migrate database schema to the latest version
+      # # https://knexjs.org/#Migrations-CLI
+      # - id: migrate
+      #   name: gcr.io/cloud-builders/npm
+      #   entrypoint: sh
+      #   args:
+      #     - "-c"
+      #     - "(./cloud_sql_proxy -dir=/cloudsql -instances=$_INSTANCE_CONNECTION_NAME --port 5432 & sleep 2)"
+      #   timeout: "1200s"
+      #   waitFor: ["npm-install", "proxy-install"]
 
       # - name: Deploy to Kubernetes
       #   run: |
