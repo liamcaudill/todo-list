@@ -3,7 +3,7 @@ on:
     branches: [main, gh-actions]
 name: Deploy main branch to staging env
 env:
-  REGISTRY: gcr.io
+  REGISTRY: gcr.io/samir1024
   APP_ENV: staging
   APP_NAME: liam-todo
   GCP_PROJECT_ID: samir1024
