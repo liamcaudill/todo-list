@@ -13,7 +13,6 @@ jobs:
     name: Build
     runs-on: ubuntu-latest
 
-
     permissions:
       id-token: write # This is required for requesting the JWT
       contents: read # This is required for actions/checkout
@@ -38,29 +37,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
 
-      - name: Extract metadata (tags, labels) for Docker
-        id: meta
-        uses: docker/metadata-action@v4
-        with:
-          images: ${{ env.REGISTRY }}/${{ env.APP_NAME }}
-          tags: |
-            type=schedule
-            type=ref,event=branch
-            type=ref,event=pr
-            type=semver,pattern={{version}}
-            type=semver,pattern={{major}}.{{minor}}``
-            type=semver,pattern={{major}}
-            type=sha
-
-      - name: Build and push Docker image
-        uses: docker/build-push-action@v3
-        with:
-          context: .
-          push: true
-          no-cache: true
-          tags: ${{ steps.meta.outputs.tags }}
-          labels: ${{ steps.meta.outputs.labels }}
-
       - name: Get image tags
         id: dockerImage
         run: echo "tag=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
@@ -68,19 +44,14 @@ jobs:
       - name: Output image tags
         run: echo "IMAGE_TAG=${{ steps.dockerImage.outputs.tag }}"
 
-
-
-
-
-
-
-
-
-
-
-
-
-
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          no-cache: true
+          tags: ${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }}
+          labels: ${{ steps.meta.outputs.labels }}
 
       - name: "Set up Cloud SDK"
         uses: "google-github-actions/setup-gcloud@v1"
@@ -98,6 +69,7 @@ jobs:
           secrets: |-
             postgres_user:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-user
             postgres_password:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-password
+            postgres_private_host:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-private-host
 
       - uses: actions/setup-node@v3
         with:
@@ -123,10 +95,16 @@ jobs:
           ./cloud_sql_proxy -instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }}:${{ env.POSTGRES_DB }}=tcp:${{ env.POSTGRES_PORT }} &
           npm run migrate-prod
 
-
-      # - name: Deploy service to cloud run
-      #   id: 'deploy'
-      #   uses: 'google-github-actions/deploy-cloudrun@v1'
-      #   with:
-      #     service: 'liam-todo'
-      #     image: 'gcr.io/cloudrun/hello'
+      - name: Deploy service to cloud run
+        id: "deploy"
+        uses: "google-github-actions/deploy-cloudrun@v1"
+        with:
+          service: "liam-todo"
+          image: ${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }}
+          env_vars: |
+            NODE_ENV=${{ env.APP_ENV }}
+            POSTGRES_DB=liam-todo
+            POSTGRES_PORT=5432
+            POSTGRES_HOST=${{ steps.secrets.outputs.postgres_private_host }}
+            POSTGRES_USER=${{ steps.secrets.outputs.postgres_user }}
+            POSTGRES_PASSWORD=${{ steps.secrets.outputs.postgres_password }}
