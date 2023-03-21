@@ -12,7 +12,6 @@ env:
   POSTGRES_HOST: localhost
   CLOUD_SQL_INSTANCE_CONNECTION: samir1024:us-central1:pg
   
-
 jobs:
   build:
     environment: staging
