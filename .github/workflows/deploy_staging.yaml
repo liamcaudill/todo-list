@@ -103,6 +103,7 @@ jobs:
           --platform=managed \
           --allow-unauthenticated \
           --memory=256M \
+          --port=3000 \
           --max-instances=5 \
           --execution-environment=gen2 \
           --add-cloudsql-instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }} \
