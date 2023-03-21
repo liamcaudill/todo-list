@@ -7,6 +7,11 @@ env:
   APP_ENV: staging
   APP_NAME: liam-todo
   GCP_PROJECT_ID: samir1024
+  POSTGRES_DB: liam-todo
+  POSTGRES_PORT: 5432
+  POSTGRES_HOST: localhost
+  CLOUD_SQL_INSTANCE_CONNECTION: samir1024:us-central1:pg
+
 jobs:
   build:
     environment: staging
@@ -85,26 +90,18 @@ jobs:
 
       - name: Run Database migrations
         env:
-          CLOUD_SQL_INSTANCE_CONNECTION: samir1024:us-central1:pg
-          POSTGRES_DB: liam-todo
-          POSTGRES_PORT: 5432
-          POSTGRES_HOST: localhost
           POSTGRES_USER: ${{ steps.secrets.outputs.postgres_user }}
           POSTGRES_PASSWORD: ${{ steps.secrets.outputs.postgres_password }}
         run: |
           ./cloud_sql_proxy -instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }}:${{ env.POSTGRES_DB }}=tcp:${{ env.POSTGRES_PORT }} &
           npm run migrate-prod
 
-      - name: Deploy service to cloud run
-        id: "deploy"
-        uses: "google-github-actions/deploy-cloudrun@v1"
-        with:
-          service: "liam-todo"
-          image: ${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }}
-          env_vars: |
-            NODE_ENV=${{ env.APP_ENV }}
-            POSTGRES_DB=liam-todo
-            POSTGRES_PORT=5432
-            POSTGRES_HOST=${{ steps.secrets.outputs.postgres_private_host }}
-            POSTGRES_USER=${{ steps.secrets.outputs.postgres_user }}
-            POSTGRES_PASSWORD=${{ steps.secrets.outputs.postgres_password }}
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.APP_NAME }} \ 
+          --image=${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }} \
+          --platform=managed \
+          --allow-unauthenticated \
+          --memory=256M \
+          --max-instances=5 \
+          --set-env-vars=NODE_ENV=${{ env.APP_ENV }},POSTGRES_DB=${{ env.POSTGRES_DB }},POSTGRES_PORT=${{ env.POSTGRES_PORT }},POSTGRES_HOST=${{ steps.secrets.outputs.postgres_private_host }},POSTGRES_USER=${{ steps.secrets.outputs.postgres_user }},POSTGRES_PASSWORD=${{ steps.secrets.outputs.postgres_password }}
