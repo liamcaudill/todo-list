@@ -98,8 +98,7 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy ${{ env.APP_NAME }} \ 
-          --image=${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }} \
+          gcloud run deploy ${{ env.APP_NAME }} --image=${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }} \ 
           --platform=managed \
           --allow-unauthenticated \
           --memory=256M \
