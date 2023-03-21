@@ -10,5 +10,5 @@ RUN npm run build
 
 # Generate Prisma database client code
 RUN npm run prisma:generate
-
+EXPOSE 3000
 CMD [ "npm", "run","start:dev"]
