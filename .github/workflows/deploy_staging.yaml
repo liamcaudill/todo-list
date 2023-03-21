@@ -92,7 +92,7 @@ jobs:
         env:
           POSTGRES_DB: liam-todo
           POSTGRES_PORT: 5432
-          POSTGRES_HOST: ${{ steps.secrets.outputs.postgres_host }}
+          POSTGRES_HOST: localhost
           POSTGRES_USER: ${{ steps.secrets.outputs.postgres_user }}
           POSTGRES_PASSWORD: ${{ steps.secrets.outputs.postgres_password }}
         run: |
