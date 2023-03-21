@@ -3,21 +3,17 @@ on:
     branches: [main, gh-actions]
 name: Deploy main branch to staging env
 env:
-  REGISTRY: slingshotaerospace.jfrog.io/devops-docker
-  AWS_REGION: us-west-2
-  IAM_ROLE: arn:aws:iam::604741711296:role/eks-deploy-github
-  CLUSTER_NAME: staging
+  DOCKER_REGISTRY: gcr.io
   APP_ENV: staging
-  APP_NAME: job-scheduler
-  KUBE_NAMESPACE: staging
+  APP_NAME: liam-todo
+  GCP_PROJECT_ID: samir1024
 jobs:
   build:
     environment: staging
     name: Build
     runs-on: ubuntu-latest
-    env:
-      GCP_PROJECT_ID: samir1024
-      CLOUD_SQL_INSTANCE_CONNECTION: samir1024:us-central1:pg
+
+
     permissions:
       id-token: write # This is required for requesting the JWT
       contents: read # This is required for actions/checkout
@@ -33,6 +29,11 @@ jobs:
         with:
           workload_identity_provider: "projects/149224336144/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
           service_account: "github-oidc@samir1024.iam.gserviceaccount.com"
+
+      # Configure docker to use the gcloud command-line tool as a credential helper
+      - name: Configure docker to use GCR
+        run: |
+          gcloud auth configure-docker -q
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v2
@@ -51,12 +52,35 @@ jobs:
             type=semver,pattern={{major}}
             type=sha
 
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          no-cache: true
+          tags: ${{ steps.meta.outputs.tags }}
+          labels: ${{ steps.meta.outputs.labels }}
+
       - name: Get image tags
         id: dockerImage
         run: echo "tag=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
 
       - name: Output image tags
         run: echo "IMAGE_TAG=${{ steps.dockerImage.outputs.tag }}"
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
       - name: "Set up Cloud SDK"
         uses: "google-github-actions/setup-gcloud@v1"
@@ -74,13 +98,12 @@ jobs:
           secrets: |-
             postgres_user:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-user
             postgres_password:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-password
-            postgres_host:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-host
 
       - uses: actions/setup-node@v3
         with:
           node-version: 18
 
-      - name: Install packages
+      - name: Install NPM packages
         run: npm ci
 
       - name: Get Cloud SQL Proxy
@@ -90,6 +113,7 @@ jobs:
 
       - name: Run Database migrations
         env:
+          CLOUD_SQL_INSTANCE_CONNECTION: samir1024:us-central1:pg
           POSTGRES_DB: liam-todo
           POSTGRES_PORT: 5432
           POSTGRES_HOST: localhost
@@ -99,56 +123,10 @@ jobs:
           ./cloud_sql_proxy -instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }}:${{ env.POSTGRES_DB }}=tcp:${{ env.POSTGRES_PORT }} &
           npm run migrate-prod
 
-      # - name: Backup staging database
-      #   run: |
-      #     gcloud sql backups create --instance=pg
 
-      # - run: npm run migrate:prod
-
-      # - name: Build and push Docker image
-      #   uses: docker/build-push-action@v3
+      # - name: Deploy service to cloud run
+      #   id: 'deploy'
+      #   uses: 'google-github-actions/deploy-cloudrun@v1'
       #   with:
-      #     context: .
-      #     push: true
-      #     no-cache: true
-      #     tags: ${{ steps.meta.outputs.tags }},${{ env.REGISTRY }}/${{ env.APP_NAME }}:latest
-      #     labels: ${{ steps.meta.outputs.labels }}
-      #     build-args: |
-      #       DD_ENV=${{ env.APP_ENV }}
-      #       DD_SERVICE=${{ env.APP_NAME }}
-
-      # - name: "node"
-      #   id: npm-install
-      #   entrypoint: "npm"
-      #   args: ["install"]
-
-      #   # Install Cloud SQL proxy
-      # - id: proxy-install
-      #   name: gcr.io/cloud-builders/npm
-      #   entrypoint: sh
-      #   args:
-      #     - "-c"
-      #     - "wget https://storage.googleapis.com/cloudsql-proxy/v1.20.1/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy && chmod +x cloud_sql_proxy"
-      #   waitFor: ["-"]
-
-      # # Migrate database schema to the latest version
-      # # https://knexjs.org/#Migrations-CLI
-      # - id: migrate
-      #   name: gcr.io/cloud-builders/npm
-      #   entrypoint: sh
-      #   args:
-      #     - "-c"
-      #     - "(./cloud_sql_proxy -dir=/cloudsql -instances=$_INSTANCE_CONNECTION_NAME --port 5432 & sleep 2)"
-      #   timeout: "1200s"
-      #   waitFor: ["npm-install", "proxy-install"]
-
-      # - name: Deploy to Kubernetes
-      #   run: |
-      #     aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name "${{ env.CLUSTER_NAME }}"
-      #     helm upgrade \
-      #       --install \
-      #       --history-max 3 \
-      #       --set deployment-simple.image.repository=${{ env.REGISTRY }}/${{ env.APP_NAME }},deployment-simple.image.tag=${{ steps.dockerImage.outputs.tag }},deployment-simple.fullnameOverride=${{ env.APP_NAME }} \
-      #       -f ./devops/helm/values.${{ env.APP_ENV }}.yaml \
-      #       -n ${{ env.KUBE_NAMESPACE }} \
-      #       ${{ env.APP_NAME }} ./devops/helm
+      #     service: 'liam-todo'
+      #     image: 'gcr.io/cloudrun/hello'
