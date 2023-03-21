@@ -98,13 +98,13 @@ jobs:
 
       - name: Deploy to Cloud Run
         run: |
-          gcloud run deploy ${{ env.APP_NAME }} --image=${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }} \ 
-            --platform=managed \
+          gcloud run deploy ${{ env.APP_NAME }} --image=${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }} \
             --allow-unauthenticated \
-            --memory=256M \
+            --memory=1024M \
             --port=3000 \
             --region=us-central1 \
             --max-instances=5 \
             --execution-environment=gen2 \
             --add-cloudsql-instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }} \
-            --set-env-vars=NODE_ENV=${{ env.APP_ENV }},POSTGRES_DB=${{ env.POSTGRES_DB }},POSTGRES_PORT=${{ env.POSTGRES_PORT }},POSTGRES_HOST=${{ steps.secrets.outputs.postgres_private_host }},POSTGRES_USER=${{ steps.secrets.outputs.postgres_user }},POSTGRES_PASSWORD=${{ steps.secrets.outputs.postgres_password }}
+            --set-env-vars=NODE_ENV=${{ env.APP_ENV }},POSTGRES_DB=${{ env.POSTGRES_DB }},POSTGRES_PORT=${{ env.POSTGRES_PORT }} \
+            --set-secrets=POSTGRES_HOST=${{ steps.secrets.outputs.postgres_private_host }},POSTGRES_USER=${{ steps.secrets.outputs.postgres_user }},POSTGRES_PASSWORD=${{ steps.secrets.outputs.postgres_password }}
