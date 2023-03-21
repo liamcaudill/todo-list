@@ -1,0 +1,79 @@
+on:
+  push:
+    branches: [main, gh-actions]
+name: Deploy main branch to staging env
+env:
+  REGISTRY: slingshotaerospace.jfrog.io/devops-docker
+  AWS_REGION: us-west-2
+  IAM_ROLE: arn:aws:iam::604741711296:role/eks-deploy-github
+  CLUSTER_NAME: staging
+  APP_ENV: staging
+  APP_NAME: job-scheduler
+  KUBE_NAMESPACE: staging
+jobs:
+  build:
+    environment: staging
+    name: Build
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read # This is required for actions/checkout
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: "actions/checkout@v3"
+
+      - name: "Authenticate to Google Cloud"
+        id: "auth"
+        uses: "google-github-actions/auth@v1"
+        with:
+          workload_identity_provider: "projects/149224336144/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "github-oidc@samir1024.iam.gserviceaccount.com"
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Extract metadata (tags, labels) for Docker
+        id: meta
+        uses: docker/metadata-action@v4
+        with:
+          images: ${{ env.REGISTRY }}/${{ env.APP_NAME }}
+          tags: |
+            type=schedule
+            type=ref,event=branch
+            type=ref,event=pr
+            type=semver,pattern={{version}}
+            type=semver,pattern={{major}}.{{minor}}``
+            type=semver,pattern={{major}}
+            type=sha
+
+      - name: Get image tags
+        id: dockerImage
+        run: echo "tag=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Output image tags
+        run: echo "IMAGE_TAG=${{ steps.dockerImage.outputs.tag }}"
+
+      # - name: Build and push Docker image
+      #   uses: docker/build-push-action@v3
+      #   with:
+      #     context: .
+      #     push: true
+      #     no-cache: true
+      #     tags: ${{ steps.meta.outputs.tags }},${{ env.REGISTRY }}/${{ env.APP_NAME }}:latest
+      #     labels: ${{ steps.meta.outputs.labels }}
+      #     build-args: |
+      #       DD_ENV=${{ env.APP_ENV }}
+      #       DD_SERVICE=${{ env.APP_NAME }}
+
+      # - name: Deploy to Kubernetes
+      #   run: |
+      #     aws eks update-kubeconfig --region ${{ env.AWS_REGION }} --name "${{ env.CLUSTER_NAME }}"
+      #     helm upgrade \
+      #       --install \
+      #       --history-max 3 \
+      #       --set deployment-simple.image.repository=${{ env.REGISTRY }}/${{ env.APP_NAME }},deployment-simple.image.tag=${{ steps.dockerImage.outputs.tag }},deployment-simple.fullnameOverride=${{ env.APP_NAME }} \
+      #       -f ./devops/helm/values.${{ env.APP_ENV }}.yaml \
+      #       -n ${{ env.KUBE_NAMESPACE }} \
+      #       ${{ env.APP_NAME }} ./devops/helm
