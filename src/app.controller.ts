@@ -11,19 +11,18 @@ export class AppController {
     return this.appService.getTodo()
   }
 
-  
   @Get("/api/todo/:id")
   getTodosByID(@Param() params) {
     return this.appService.getTodoByID(params.id)
   }
-  
+
   @Post("/api/todo")
   createTodo(@Req() req) {
     const body = req.body;
     return this.appService.createTodo(body)
   }
-  
-@Put("/api/todo/:id")
+
+  @Put("/api/todo/:id")
   updateTodo(@Req() req, @Param() params) {
     const idNum = parseInt(params.id)
     const body = req.body
@@ -35,4 +34,5 @@ export class AppController {
     const idNum = parseInt(params.id)
     return this.appService.deleteTodo(idNum)
   }
+
 }

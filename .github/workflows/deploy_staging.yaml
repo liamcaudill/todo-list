@@ -1,0 +1,108 @@
+on:
+  push:
+    branches: [main, gh-actions]
+name: Deploy main branch to staging
+env:
+  REGISTRY: gcr.io/samir1024
+  APP_ENV: staging
+  APP_NAME: liam-todo
+  GCP_PROJECT_ID: samir1024
+  POSTGRES_DB: liam-todo
+  POSTGRES_PORT: 5432
+  POSTGRES_HOST: localhost
+  CLOUD_SQL_INSTANCE_CONNECTION: samir1024:us-central1:pg
+jobs:
+  build:
+    environment: staging
+    name: Build
+    runs-on: ubuntu-latest
+
+    permissions:
+      id-token: write # This is required for requesting the JWT
+      contents: read # This is required for actions/checkout
+      packages: write
+
+    steps:
+      - name: Checkout repository
+        uses: "actions/checkout@v3"
+
+      - name: "Authenticate to Google Cloud"
+        id: "auth"
+        uses: "google-github-actions/auth@v1"
+        with:
+          workload_identity_provider: "projects/149224336144/locations/global/workloadIdentityPools/github-pool/providers/github-provider"
+          service_account: "github-oidc@samir1024.iam.gserviceaccount.com"
+
+      # Configure docker to use the gcloud command-line tool as a credential helper
+      - name: Configure docker to use GCR
+        run: |
+          gcloud auth configure-docker -q
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: Get image tags
+        id: dockerImage
+        run: echo "tag=sha-$(git rev-parse --short HEAD)" >> $GITHUB_OUTPUT
+
+      - name: Output image tags
+        run: echo "IMAGE_TAG=${{ steps.dockerImage.outputs.tag }}"
+
+      - name: Build and push Docker image
+        uses: docker/build-push-action@v3
+        with:
+          context: .
+          push: true
+          no-cache: true
+          tags: ${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }}
+          labels: ${{ steps.meta.outputs.labels }}
+
+      - name: "Set up Cloud SDK"
+        uses: "google-github-actions/setup-gcloud@v1"
+
+      # Now you can run gcloud commands authenticated as the impersonated service account.
+      - id: "gcloud"
+        name: "gcloud"
+        run: |-
+          gcloud secrets versions access "latest" --secret "foo"
+
+      - name: Get Secrets from GCP Secret Manager
+        id: "secrets"
+        uses: "google-github-actions/get-secretmanager-secrets@v1"
+        with:
+          secrets: |-
+            postgres_user:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-user
+            postgres_password:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-password
+            postgres_private_host:${{ env.GCP_PROJECT_ID }}/liam-todo-postgres-private-host
+
+      - uses: actions/setup-node@v3
+        with:
+          node-version: 18
+
+      - name: Install NPM packages
+        run: npm ci
+
+      - name: Get Cloud SQL Proxy
+        run: |
+          wget https://dl.google.com/cloudsql/cloud_sql_proxy.linux.amd64 -O cloud_sql_proxy
+          chmod +x cloud_sql_proxy
+
+      - name: Run Database migrations
+        env:
+          POSTGRES_USER: ${{ steps.secrets.outputs.postgres_user }}
+          POSTGRES_PASSWORD: ${{ steps.secrets.outputs.postgres_password }}
+        run: |
+          ./cloud_sql_proxy -instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }}:${{ env.POSTGRES_DB }}=tcp:${{ env.POSTGRES_PORT }} &
+          npm run migrate-prod
+
+      - name: Deploy to Cloud Run
+        run: |
+          gcloud run deploy ${{ env.APP_NAME }} --image=${{ env.REGISTRY }}/${{ env.APP_NAME }}:${{ steps.dockerImage.outputs.tag }} \
+            --allow-unauthenticated \
+            --memory=1024M \
+            --port=3000 \
+            --region=us-central1 \
+            --max-instances=20 \
+            --execution-environment=gen2 \
+            --add-cloudsql-instances=${{ env.CLOUD_SQL_INSTANCE_CONNECTION }} \
+            --set-env-vars=NODE_ENV=${{ env.APP_ENV }},DATABASE_URL="postgresql://${{ steps.secrets.outputs.postgres_user }}:${{ steps.secrets.outputs.postgres_password }}@localhost:${{ env.POSTGRES_PORT }}/${{ env.POSTGRES_DB }}?schema=public&host=/cloudsql/${{ env.CLOUD_SQL_INSTANCE_CONNECTION }}"
